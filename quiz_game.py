@@ -14,6 +14,8 @@ class QuizGame:
         self.default_state_file = "state_default.json"  # 기본 상태 파일 경로
         self.input_handler = InputHandler()  # 공통 입력/검증 처리기
 
+    # --- 상태 저장/로드 영역 시작 ---
+
     def _reset_with_default_data(self):  # 기본 파일 기준 상태 복구
         with open(self.default_state_file, "r", encoding="utf-8") as file:  # 기본 상태 파일 읽기
             default_data = json.load(file)  # 기본 JSON 데이터 로드
@@ -37,7 +39,7 @@ class QuizGame:
             print("state.json 파일을 불러올 수 없어 state_default.json 데이터를 불러옵니다.")  # 복구 안내 문구 출력
             self._reset_with_default_data()  # 기본 데이터로 상태 복구
 
-    def save_state(self):
+    def save_state(self): # 현재 상태를 파일에 저장
         data = {  # 저장할 상태 데이터 구성
             "quizzes": [quiz.to_dict() for quiz in self.quizzes],  # 퀴즈 목록을 딕셔너리 형태로 저장
             "best_score": self.best_score,  # 최고 점수 저장
@@ -47,16 +49,15 @@ class QuizGame:
         with open(self.state_file, "w", encoding="utf-8") as file:  # 상태 파일 쓰기
             json.dump(data, file, ensure_ascii=False, indent=2)  # JSON 형태로 저장
 
+    # --- 상태 저장/로드 영역 끝 ---
+    # --- 퀴즈 게임 메뉴 영역 시작 ---
+
     def show_menu(self):
         print("\n파이썬 퀴즈 프로그램 시작")  # 프로그램 시작 문구 출력
         print("1. 퀴즈 풀기 / 2. 퀴즈 추가 / 3. 퀴즈 목록 / 4. 점수 확인 / 5. 종료")  # 메뉴 출력
         return self.input_handler.input_int_in_range("메뉴를 입력하세요: ", 1, 5)  # 메뉴 번호 입력 반환
 
     def play_quiz(self):
-        if not self.quizzes:  # 퀴즈가 없는 경우 확인
-            print("등록된 퀴즈가 없습니다.")  # 안내 문구 출력
-            return  # 함수 종료
-
         score = 0  # 현재 플레이 점수
         result_marks = []  # 문제별 정오 이모티콘 기록
         for index, quiz in enumerate(self.quizzes, start=1):  # 퀴즈 순회
@@ -107,3 +108,5 @@ class QuizGame:
             print("아직 퀴즈를 풀지 않았습니다.")  # 미응시 안내 문구 출력
             return  # 함수 종료
         print(f"최고 점수: {self.best_score}")  # 최고 점수 출력
+
+    # --- 퀴즈 게임 메뉴 영역 끝 ---
