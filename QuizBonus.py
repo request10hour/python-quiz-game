@@ -1,0 +1,2 @@
+class QuizBonus:
+    pass
