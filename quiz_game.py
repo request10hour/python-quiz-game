@@ -106,13 +106,22 @@ class QuizGame:
             return  # 함수 종료
 
         score = 0  # 현재 플레이 점수
+        result_marks = []  # 문제별 정오 이모티콘 기록
         for index, quiz in enumerate(self.quizzes, start=1):  # 퀴즈 순회
             print(f"\n[{index}번 문제] {quiz.question}")  # 문제 번호와 질문 출력
             quiz.display()  # 문제와 보기 출력
             user_answer = self._input_int_in_range("정답 번호를 입력하세요: ", 1, len(quiz.choices))  # 사용자 답 입력
             if quiz.check_answer(str(user_answer)):  # 정답 여부 확인
                 score += 1  # 점수 증가
+                result_marks.append("✅")  # 정답 기록
+                print("✅")  # 정답 표시
+            else:
+                result_marks.append("❌")  # 오답 기록
+                print("❌")  # 오답 표시
 
+        result_line = " / ".join([f"{index}. {mark}" for index, mark in enumerate(result_marks, start=1)])  # 최종 결과 라인 생성
+        print("\n[결과 요약]")  # 결과 요약 제목 출력
+        print(result_line)  # 문제별 최종 결과 출력
         print(f"\n점수: {score}/{len(self.quizzes)}")  # 결과 점수 출력
         if score > self.best_score:  # 최고 점수 갱신 여부 확인
             self.best_score = score  # 최고 점수 갱신
