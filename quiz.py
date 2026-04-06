@@ -7,7 +7,6 @@ class Quiz:
         self.answer = answer
 
     def display(self):
-        print(f"질문: {self.question}")
         for choice in self.choices:
             print(choice)
 
