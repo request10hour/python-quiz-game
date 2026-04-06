@@ -22,7 +22,7 @@ def main():
                 game.save_state()
                 break
     except (KeyboardInterrupt, EOFError):
-        print("입력이 중단되어 안전하게 종료합니다.")
+        print("\n입력이 중단되어 안전하게 종료합니다.")
         game.save_state()
 
 if __name__ == '__main__':

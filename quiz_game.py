@@ -52,10 +52,12 @@ class QuizGame:
                 self._reset_with_default_data()
                 self.save_state()
         except FileNotFoundError:
+            print("\n[기본 퀴즈 데이터로 복구]")
             print("state.json 파일이 없어 state_default.json 데이터를 불러옵니다.")
             self._reset_with_default_data()
             self.save_state()
         except (json.JSONDecodeError, KeyError, TypeError, ValueError):
+            print("\n[기본 퀴즈 데이터로 복구]")
             print("state.json 파일을 불러올 수 없어 state_default.json 데이터를 불러옵니다.")
             self._reset_with_default_data()
             self.save_state()
