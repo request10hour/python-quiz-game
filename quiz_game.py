@@ -18,10 +18,39 @@ class QuizGame:
             raise TypeError
         return data
 
+    def _quizzes_from_data(self, data: dict):
+        quizzes_data = data.get("quizzes")  # JSON에서 quizzes 필드 조회
+        if not isinstance(quizzes_data, list):  # quizzes가 리스트인지 확인
+            raise TypeError  # 리스트가 아니면 손상 데이터 처리
+
+        quizzes = []  # 최종 Quiz 객체 목록
+        for item in quizzes_data:  # 퀴즈 항목 순회
+            if not isinstance(item, dict):  # 각 항목이 딕셔너리인지 확인
+                raise TypeError  # 딕셔너리가 아니면 손상 데이터 처리
+
+            question = item.get("question")  # 문제 텍스트 추출
+            choices = item.get("choices")  # 선택지 목록 추출
+            answer = item.get("answer")  # 정답 번호 추출
+
+            if not isinstance(question, str) or question.strip() == "":  # 문제가 빈 문자열이 아닌지 확인
+                raise ValueError  # 문제 형식 오류
+            if not isinstance(choices, list) or len(choices) != 4:  # 선택지가 정확히 4개인지 확인
+                raise ValueError  # 선택지 개수/형식 오류
+            if not all(isinstance(choice, str) for choice in choices):  # 선택지 요소가 모두 문자열인지 확인
+                raise ValueError  # 선택지 요소 형식 오류
+
+            answer_number = int(str(answer).strip())  # 정답 번호를 정수로 변환
+            if answer_number < 1 or answer_number > 4:  # 정답 번호 범위(1~4) 검증
+                raise ValueError  # 정답 번호 범위 오류
+
+            quizzes.append(Quiz(question, choices, str(answer_number)))  # 검증된 항목을 Quiz 인스턴스로 추가
+
+        return quizzes  # 검증 및 변환 완료된 Quiz 목록 반환
+
     def _reset_with_default_data(self):
         default_data = self._default_state_data()  # 기본 상태 데이터 로드
         self.best_score = default_data.get("best_score", 0)  # 최고 점수 초기화
-        self.quizzes = [Quiz.from_dict(item) for item in default_data.get("quizzes", [])]  # 기본 퀴즈 적용
+        self.quizzes = self._quizzes_from_data(default_data)  # 기본 퀴즈 적용
 
     def _input_int_in_range(self, prompt: str, min_value: int, max_value: int) -> int:
         while True:
@@ -46,17 +75,12 @@ class QuizGame:
         try:
             with open(self.state_file, "r", encoding="utf-8") as file:  # 상태 파일 읽기
                 data = json.load(file)  # JSON 데이터 로드
-            self.quizzes = [Quiz.from_dict(item) for item in data.get("quizzes", [])]  # 퀴즈 목록 객체 변환
+            self.quizzes = self._quizzes_from_data(data)  # 퀴즈 목록 객체 변환
             self.best_score = data.get("best_score", 0)  # 최고 점수 불러오기
             if not self.quizzes:
                 self._reset_with_default_data()
                 self.save_state()
-        except FileNotFoundError:
-            print("\n[기본 퀴즈 데이터로 복구]")
-            print("state.json 파일이 없어 state_default.json 데이터를 불러옵니다.")
-            self._reset_with_default_data()
-            self.save_state()
-        except (json.JSONDecodeError, KeyError, TypeError, ValueError):
+        except (FileNotFoundError, json.JSONDecodeError, KeyError, TypeError, ValueError):
             print("\n[기본 퀴즈 데이터로 복구]")
             print("state.json 파일을 불러올 수 없어 state_default.json 데이터를 불러옵니다.")
             self._reset_with_default_data()
@@ -96,18 +120,12 @@ class QuizGame:
 
     def add_quiz(self):
         question = input("질문을 입력하세요: ")  # 질문 입력
-        choice_1 = input("1번 보기를 입력하세요: ")  # 1번 보기 입력
-        choice_2 = input("2번 보기를 입력하세요: ")  # 2번 보기 입력
-        choice_3 = input("3번 보기를 입력하세요: ")  # 3번 보기 입력
-        choice_4 = input("4번 보기를 입력하세요: ")  # 4번 보기 입력
+        choices = []  # 보기 목록 생성
+        for index in range(1, 5):  # 1~4번 보기 반복 입력
+            choice_text = input(f"{index}번 보기를 입력하세요: ")  # 보기 입력
+            choices.append(f"{index}. {choice_text}")  # 번호가 포함된 보기 저장
         answer = self._input_int_in_range("정답 번호를 입력하세요: ", 1, 4)  # 정답 번호 입력
 
-        choices = [  # 보기 목록 생성
-            f"1. {choice_1}",  # 첫 번째 보기
-            f"2. {choice_2}",  # 두 번째 보기
-            f"3. {choice_3}",  # 세 번째 보기
-            f"4. {choice_4}",  # 네 번째 보기
-        ]
         self.quizzes.append(Quiz(question, choices, str(answer)))  # 새 퀴즈 추가
         self.save_state()  # 변경 상태 저장
         print("퀴즈가 추가되었습니다.")  # 완료 문구 출력
