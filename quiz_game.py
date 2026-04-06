@@ -58,20 +58,17 @@ class QuizGame:
         return self.input_handler.input_int_in_range("메뉴를 입력하세요: ", 1, 5)  # 메뉴 번호 입력 반환
 
     def play_quiz(self):
-        score = 0  # 현재 플레이 점수
-        result_marks = []  # 문제별 정오 이모티콘 기록
+        result_marks = []  # 문제별 결과 기록 리스트
         for index, quiz in enumerate(self.quizzes, start=1):  # 퀴즈 순회
             print(f"\n[{index}번 문제] {quiz.question}")  # 문제 번호와 질문 출력
             quiz.display()  # 문제와 보기 출력
             user_answer = self.input_handler.input_int_in_range("정답 번호를 입력하세요: ", 1, len(quiz.choices))  # 사용자 답 입력
-            if quiz.check_answer(str(user_answer)):  # 정답 여부 확인
-                score += 1  # 점수 증가
-                result_marks.append("✅")  # 정답 기록
-                print("✅")  # 정답 표시
-            else:
-                result_marks.append("❌")  # 오답 기록
-                print("❌")  # 오답 표시
+            is_correct = quiz.check_answer(str(user_answer))  # 정답 여부 확인
+            mark = "✅" if is_correct else "❌"  # 문제별 결과 표시값
+            result_marks.append(mark)  # 결과 기록
+            print(mark)  # 결과 출력
 
+        score = result_marks.count("✅")  # 정답 개수 기준 점수 계산
         result_line = " / ".join([f"{index}. {mark}" for index, mark in enumerate(result_marks, start=1)])  # 최종 결과 라인 생성
         print("\n[결과 요약]")  # 결과 요약 제목 출력
         print(result_line)  # 문제별 최종 결과 출력
@@ -95,10 +92,6 @@ class QuizGame:
         print("퀴즈가 추가되었습니다.")  # 완료 문구 출력
 
     def list_quizzes(self):
-        if not self.quizzes:  # 퀴즈 목록 비어있는지 확인
-            print("등록된 퀴즈가 없습니다.")  # 안내 문구 출력
-            return  # 함수 종료
-
         print("\n[퀴즈 목록 확인]")  # 목록 제목 출력
         for index, quiz in enumerate(self.quizzes, start=1):  # 퀴즈 목록 순회
             print(f"{index}. {quiz.question}")  # 번호와 질문 출력
@@ -107,6 +100,6 @@ class QuizGame:
         if not self.has_played:  # 미응시 상태 확인
             print("아직 퀴즈를 풀지 않았습니다.")  # 미응시 안내 문구 출력
             return  # 함수 종료
-        print(f"최고 점수: {self.best_score}")  # 최고 점수 출력
+        print(f"\n[최고 점수] {self.best_score}")  # 최고 점수 출력
 
     # --- 퀴즈 게임 메뉴 영역 끝 ---
