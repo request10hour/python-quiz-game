@@ -1,5 +1,5 @@
 class Quiz:
-    """Represents a single quiz question and its answer."""
+    """단일 퀴즈 질문과 정답을 나타내는 클래스"""
     
     def __init__(self, question: str, choices: list, answer: int):
         self.question = question

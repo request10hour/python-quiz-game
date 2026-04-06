@@ -18,7 +18,7 @@
 - Use `pytest` for testing. Place all tests in a dedicated `tests/` directory at the root.
 
 ## Conventions
-- Provide clear, descriptive docstrings for modules, classes, and non-trivial functions.
+- Provide clear, descriptive docstrings in Korean (한국어) for modules, classes, and non-trivial functions. Use 명사형 종결 (e.g., '~하는 클래스', '~하는 함수') instead of '~다'.
 - Avoid hardcoding configuration values; use constants or configuration files.
 
 - Exception Handling: Do NOT implement exception or error handling automatically. If you anticipate edge cases or invalid inputs (e.g., alphabets instead of numbers, unexpected number of arguments), ask the user first to discuss possible scenarios and wait for their confirmation before writing any exception handling code.

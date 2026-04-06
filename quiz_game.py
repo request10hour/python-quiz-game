@@ -1,5 +1,5 @@
 class QuizGame:
-    """Main game logic and state management."""
+    """메인 게임 로직 및 상태를 관리하는 클래스"""
     
     def __init__(self):
         self.quizzes = []

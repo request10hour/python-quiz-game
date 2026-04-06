@@ -2,7 +2,7 @@ from quiz import Quiz
 from quiz_game import QuizGame
 
 class QuizBonus(Quiz):
-    """A quiz that provides hints."""
+    """힌트를 제공하는 퀴즈 클래스"""
     
     def __init__(self, question: str, choices: list, answer: int, hint: str):
         super().__init__(question, choices, answer)
@@ -12,7 +12,7 @@ class QuizBonus(Quiz):
         pass
 
 class QuizBonusGame(QuizGame):
-    """Game mode with extended functionalities."""
+    """확장된 기능을 갖춘 게임 모드 클래스"""
     
     def __init__(self):
         super().__init__()
