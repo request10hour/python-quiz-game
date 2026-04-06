@@ -41,12 +41,15 @@ class InputHandler:
             question = item.get("question")  # 문제 텍스트 추출
             choices = item.get("choices")  # 선택지 목록 추출
             answer = item.get("answer")  # 정답 번호 추출
+            hint = item.get("hint")  # 힌트 텍스트 추출
 
             if not isinstance(question, str) or question.strip() == "":  # 문제가 빈 문자열이 아닌지 확인
                 raise ValueError
             if not isinstance(choices, list) or len(choices) != 4:  # 선택지가 정확히 4개인지 확인
                 raise ValueError
             if not all(isinstance(choice, str) for choice in choices):  # 선택지 요소가 모두 문자열인지 확인
+                raise ValueError
+            if not isinstance(hint, str) or hint.strip() == "":  # 힌트가 빈 문자열이 아닌지 확인
                 raise ValueError
 
             answer_number = int(str(answer).strip())  # 정답 번호를 정수로 변환
@@ -57,6 +60,7 @@ class InputHandler:
                 "question": question,
                 "choices": choices,
                 "answer": str(answer_number),
+                "hint": hint,
             })
 
         return validated

@@ -1,5 +1,5 @@
 import json
-from quiz import Quiz
+from quiz_bonus import QuizBonus
 from input_handler import InputHandler
 
 
@@ -22,14 +22,14 @@ class QuizGame:
         self.best_score = default_data.get("best_score", 0)  # 최고 점수 초기화
         self.has_played = default_data.get("has_played", False)  # 퀴즈 응시 여부 초기화
         validated = self.input_handler.validate_quizzes_data(default_data)  # 기본 데이터 유효성 검증
-        self.quizzes = [Quiz(item["question"], item["choices"], item["answer"]) for item in validated]  # 기본 퀴즈 적용
+        self.quizzes = [QuizBonus(item["question"], item["choices"], item["answer"], item["hint"]) for item in validated]  # 기본 퀴즈 적용
 
     def load_state(self):  # 저장된 상태 파일 로드
         try:  # 저장된 상태 파일 로드 시도
             with open(self.state_file, "r", encoding="utf-8") as file:  # 저장된 상태 파일 읽기
                 data = json.load(file)  # 저장된 상태 JSON 데이터 로드
             validated = self.input_handler.validate_quizzes_data(data)  # 저장된 상태 데이터 유효성 검증
-            self.quizzes = [Quiz(item["question"], item["choices"], item["answer"]) for item in validated]  # 저장된 상태 퀴즈 적용
+            self.quizzes = [QuizBonus(item["question"], item["choices"], item["answer"], item["hint"]) for item in validated]  # 저장된 상태 퀴즈 적용
             self.best_score = data.get("best_score", 0)  # 최고 점수 불러오기
             self.has_played = data.get("has_played", False)  # 퀴즈 응시 여부 불러오기
             if not self.quizzes:  # 퀴즈 비어 있음 확인
@@ -62,13 +62,17 @@ class QuizGame:
         for index, quiz in enumerate(self.quizzes, start=1):  # 퀴즈 순회
             print(f"\n[{index}번 문제] {quiz.question}")  # 문제 번호와 질문 출력
             quiz.display()  # 문제와 보기 출력
-            user_answer = self.input_handler.input_int_in_range("정답 번호를 입력하세요: ", 1, len(quiz.choices))  # 사용자 답 입력
+            user_answer, used_hint_in_question = quiz.input_answer_with_optional_hint(self.input_handler)  # 정답/힌트 입력 처리
             is_correct = quiz.check_answer(str(user_answer))  # 정답 여부 확인
-            mark = "✅" if is_correct else "❌"  # 문제별 결과 표시값
+            if is_correct and used_hint_in_question:
+                mark = "⚠️"  # 힌트 사용 후 정답
+            elif is_correct:
+                mark = "✅"  # 정답
+            else:
+                mark = "❌"  # 오답
             result_marks.append(mark)  # 결과 기록
             print(mark)  # 결과 출력
-
-        score = result_marks.count("✅")  # 정답 개수 기준 점수 계산
+        score = result_marks.count("✅") + (result_marks.count("⚠️") * 0.5)  # 최종 점수 일괄 계산
         result_line = " / ".join([f"{index}. {mark}" for index, mark in enumerate(result_marks, start=1)])  # 최종 결과 라인 생성
         print("\n[결과 요약]")  # 결과 요약 제목 출력
         print(result_line)  # 문제별 최종 결과 출력
@@ -86,8 +90,9 @@ class QuizGame:
             choice_text = self.input_handler.input_non_empty_text(f"{index}번 보기를 입력하세요: ")  # 보기 입력
             choices.append(f"{index}. {choice_text}")  # 번호가 포함된 보기 저장
         answer = self.input_handler.input_int_in_range("정답 번호를 입력하세요: ", 1, 4)  # 정답 번호 입력
+        hint = self.input_handler.input_non_empty_text("힌트를 입력하세요: ")  # 힌트 입력
 
-        self.quizzes.append(Quiz(question, choices, str(answer)))  # 새 퀴즈 추가
+        self.quizzes.append(QuizBonus(question, choices, str(answer), hint))  # 새 퀴즈 추가
         self.save_state()  # 변경 상태 저장
         print("퀴즈가 추가되었습니다.")  # 완료 문구 출력
 
@@ -98,7 +103,7 @@ class QuizGame:
 
     def show_best_score(self):
         if not self.has_played:  # 미응시 상태 확인
-            print("아직 퀴즈를 풀지 않았습니다.")  # 미응시 안내 문구 출력
+            print("\n아직 퀴즈를 풀지 않았습니다.")  # 미응시 안내 문구 출력
             return  # 함수 종료
         print(f"\n[최고 점수] {self.best_score}")  # 최고 점수 출력
 
