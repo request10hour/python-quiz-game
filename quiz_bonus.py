@@ -1,6 +1,7 @@
 """보너스 퀴즈 기능을 제공하는 모듈"""
 
 import random
+from datetime import datetime
 
 from quiz import Quiz
 
@@ -32,7 +33,6 @@ class RandomQuiz:
 
         return selected_quizzes
 
-
 class HintQuiz(Quiz):
     """힌트 입력 처리 기능을 포함하는 퀴즈 클래스"""
 
@@ -60,3 +60,38 @@ class HintQuiz(Quiz):
                 continue
 
             print("숫자 또는 h만 입력하세요.")
+
+
+class DeleteQuiz:
+    """퀴즈 삭제 기능을 담당하는 클래스"""
+
+    def delete_quiz_by_number(self, quizzes, input_handler):
+        """번호를 입력받아 퀴즈를 삭제하는 함수"""
+        if len(quizzes) <= 1:
+            print("퀴즈는 최소 1개가 필요합니다. 마지막 퀴즈는 삭제할 수 없습니다.")
+            return False
+
+        print("\n[퀴즈 삭제]")
+        for index, quiz in enumerate(quizzes, start=1):
+            print(f"{index}. {quiz.question}")
+
+        target_index = input_handler.input_int_in_range("삭제할 퀴즈 번호를 입력하세요: ", 1, len(quizzes))
+        deleted_quiz = quizzes.pop(target_index - 1)
+        print(f"삭제됨: {deleted_quiz.question}")
+        return True
+
+
+class QuizHistory:
+    """게임 기록 저장 기능을 담당하는 클래스"""
+
+    def create_record(self, question_count: int, score: float):
+        """게임 기록 1건을 생성하는 함수"""
+        return {
+            "played_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "question_count": question_count,
+            "score": score,
+        }
+
+    def append_record(self, history: list, question_count: int, score: float):
+        """기록 목록에 게임 기록 1건을 추가하는 함수"""
+        history.append(self.create_record(question_count, score))

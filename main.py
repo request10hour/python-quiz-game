@@ -18,6 +18,10 @@ def main():
             elif choice == 4:
                 game.show_best_score()
             elif choice == 5:
+                game.delete_quiz()
+            elif choice == 6:
+                game.show_history()
+            elif choice == 7:
                 print("프로그램을 종료합니다.")
                 game.save_state()
                 break

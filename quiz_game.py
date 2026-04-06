@@ -1,5 +1,5 @@
 import json
-from quiz_bonus import HintQuiz, RandomQuiz
+from quiz_bonus import DeleteQuiz, HintQuiz, QuizHistory, RandomQuiz
 from input_handler import InputHandler
 
 
@@ -10,10 +10,13 @@ class QuizGame:
         self.quizzes = []  # 퀴즈 목록
         self.best_score = 0  # 최고 점수
         self.has_played = False  # 퀴즈 응시 여부
+        self.history = []  # 게임 기록 목록
         self.state_file = "state.json"  # 상태 저장 파일 경로
         self.default_state_file = "state_default.json"  # 기본 상태 파일 경로
         self.input_handler = InputHandler()  # 공통 입력/검증 처리기
         self.bonus_game = RandomQuiz()  # 보너스 출제 규칙 처리기
+        self.delete_game = DeleteQuiz()  # 퀴즈 삭제 처리기
+        self.history_game = QuizHistory()  # 게임 기록 처리기
 
     # --- 상태 저장/로드 영역 시작 ---
 
@@ -22,6 +25,7 @@ class QuizGame:
             default_data = json.load(file)  # 기본 JSON 데이터 로드
         self.best_score = default_data.get("best_score", 0)  # 최고 점수 초기화
         self.has_played = default_data.get("has_played", False)  # 퀴즈 응시 여부 초기화
+        self.history = default_data.get("history", [])  # 게임 기록 초기화
         validated = self.input_handler.validate_quizzes_data(default_data)  # 기본 데이터 유효성 검증
         self.quizzes = [HintQuiz(item["question"], item["choices"], item["answer"], item["hint"]) for item in validated]  # 기본 퀴즈 적용
 
@@ -33,6 +37,7 @@ class QuizGame:
             self.quizzes = [HintQuiz(item["question"], item["choices"], item["answer"], item["hint"]) for item in validated]  # 저장된 상태 퀴즈 적용
             self.best_score = data.get("best_score", 0)  # 최고 점수 불러오기
             self.has_played = data.get("has_played", False)  # 퀴즈 응시 여부 불러오기
+            self.history = data.get("history", [])  # 게임 기록 불러오기
             if not self.quizzes:  # 퀴즈 비어 있음 확인
                 raise ValueError("퀴즈 데이터가 비어 있습니다.")  # 비어 있는 퀴즈 데이터 예외 발생
         except (FileNotFoundError, json.JSONDecodeError, KeyError, TypeError, ValueError):  # 로드 실패 예외 처리
@@ -45,7 +50,7 @@ class QuizGame:
             "quizzes": [quiz.to_dict() for quiz in self.quizzes],  # 퀴즈 목록을 딕셔너리 형태로 저장
             "best_score": self.best_score,  # 최고 점수 저장
             "has_played": self.has_played,  # 퀴즈 응시 여부 저장
-            "history": [],  # 기록 목록 기본값
+            "history": self.history,  # 기록 목록 저장
         }
         with open(self.state_file, "w", encoding="utf-8") as file:  # 상태 파일 쓰기
             json.dump(data, file, ensure_ascii=False, indent=2)  # JSON 형태로 저장
@@ -55,8 +60,8 @@ class QuizGame:
 
     def show_menu(self):
         print("\n파이썬 퀴즈 프로그램 시작")  # 프로그램 시작 문구 출력
-        print("1. 퀴즈 풀기 / 2. 퀴즈 추가 / 3. 퀴즈 목록 / 4. 점수 확인 / 5. 종료")  # 메뉴 출력
-        return self.input_handler.input_int_in_range("메뉴를 입력하세요: ", 1, 5)  # 메뉴 번호 입력 반환
+        print("1. 퀴즈 풀기 / 2. 퀴즈 추가 / 3. 퀴즈 목록 / 4. 점수 확인 / 5. 퀴즈 삭제 / 6. 히스토리 / 7. 종료")  # 메뉴 출력
+        return self.input_handler.input_int_in_range("메뉴를 입력하세요: ", 1, 7)  # 메뉴 번호 입력 반환
 
     def play_quiz(self):
         selected_quizzes = self.bonus_game.select_quizzes_for_play(self.quizzes, self.input_handler)  # 출제할 퀴즈 목록 결정
@@ -78,7 +83,8 @@ class QuizGame:
         result_line = " / ".join([f"{index}. {mark}" for index, mark in enumerate(result_marks, start=1)])  # 최종 결과 라인 생성
         print("\n[결과 요약]")  # 결과 요약 제목 출력
         print(result_line)  # 문제별 최종 결과 출력
-        print(f"\n점수: {score}/{len(selected_quizzes)}")  # 결과 점수 출력
+        print(f"\n점수: {score}")  # 결과 점수 출력
+        self.history_game.append_record(self.history, len(selected_quizzes), score)  # 게임 기록 저장
         self.has_played = True  # 퀴즈 응시 여부 갱신
         if score > self.best_score:  # 최고 점수 갱신 여부 확인
             self.best_score = score  # 최고 점수 갱신
@@ -105,8 +111,25 @@ class QuizGame:
 
     def show_best_score(self):
         if not self.has_played:  # 미응시 상태 확인
-            print("\n아직 퀴즈를 풀지 않았습니다.")  # 미응시 안내 문구 출력
+            print("아직 퀴즈를 풀지 않았습니다.")  # 미응시 안내 문구 출력
             return  # 함수 종료
         print(f"\n[최고 점수] {self.best_score}")  # 최고 점수 출력
+
+    def delete_quiz(self):
+        deleted = self.delete_game.delete_quiz_by_number(self.quizzes, self.input_handler)  # 번호 기반 퀴즈 삭제
+        if deleted:
+            self.save_state()  # 삭제 결과 파일 반영
+
+    def show_history(self):
+        print("\n[게임 히스토리]")
+        if not self.history:
+            print("기록이 없습니다.")
+            return
+
+        for index, record in enumerate(self.history, start=1):
+            played_at = record.get("played_at", "-")
+            question_count = record.get("question_count", 0)
+            score = record.get("score", 0)
+            print(f"{index}. {played_at} / 문제 수: {question_count} / 점수: {score}")
 
     # --- 퀴즈 게임 메뉴 영역 끝 ---
