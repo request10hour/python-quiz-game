@@ -21,11 +21,11 @@ class QuizGame:
         self.quizzes = [Quiz(item["question"], item["choices"], item["answer"]) for item in validated]  # 기본 퀴즈 적용
 
     def load_state(self):  # 저장 상태 로드
-        try:  # 상태 파일 로드 시도
-            with open(self.state_file, "r", encoding="utf-8") as file:  # 상태 파일 읽기
-                data = json.load(file)  # 상태 JSON 데이터 로드
-            validated = self.input_handler.validate_quizzes_data(data)  # 상태 데이터 유효성 검증
-            self.quizzes = [Quiz(item["question"], item["choices"], item["answer"]) for item in validated]  # 상태 퀴즈 적용
+        try:  # 저장된 상태 파일 로드 시도
+            with open(self.state_file, "r", encoding="utf-8") as file:  # 저장된 상태 파일 읽기
+                data = json.load(file)  # 저장된 상태 JSON 데이터 로드
+            validated = self.input_handler.validate_quizzes_data(data)  # 저장된 상태 데이터 유효성 검증
+            self.quizzes = [Quiz(item["question"], item["choices"], item["answer"]) for item in validated]  # 저장된 상태 퀴즈 적용
             self.best_score = data.get("best_score", 0)  # 최고 점수 불러오기
             if not self.quizzes:  # 퀴즈 비어 있음 확인
                 raise ValueError("퀴즈 데이터가 비어 있습니다.")  # 복구 분기 유도
