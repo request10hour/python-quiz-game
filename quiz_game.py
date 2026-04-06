@@ -9,6 +9,7 @@ class QuizGame:
     def __init__(self):  # 게임 초기 상태 설정
         self.quizzes = []  # 퀴즈 목록
         self.best_score = 0  # 최고 점수
+        self.has_played = False  # 퀴즈 응시 여부
         self.state_file = "state.json"  # 상태 저장 파일 경로
         self.default_state_file = "state_default.json"  # 기본 상태 파일 경로
         self.input_handler = InputHandler()  # 공통 입력/검증 처리기
@@ -17,27 +18,30 @@ class QuizGame:
         with open(self.default_state_file, "r", encoding="utf-8") as file:  # 기본 상태 파일 읽기
             default_data = json.load(file)  # 기본 JSON 데이터 로드
         self.best_score = default_data.get("best_score", 0)  # 최고 점수 초기화
+        self.has_played = default_data.get("has_played", False)  # 퀴즈 응시 여부 초기화
         validated = self.input_handler.validate_quizzes_data(default_data)  # 기본 데이터 유효성 검증
         self.quizzes = [Quiz(item["question"], item["choices"], item["answer"]) for item in validated]  # 기본 퀴즈 적용
 
-    def load_state(self):  # 저장 상태 로드
+    def load_state(self):  # 저장된 상태 파일 로드
         try:  # 저장된 상태 파일 로드 시도
             with open(self.state_file, "r", encoding="utf-8") as file:  # 저장된 상태 파일 읽기
                 data = json.load(file)  # 저장된 상태 JSON 데이터 로드
             validated = self.input_handler.validate_quizzes_data(data)  # 저장된 상태 데이터 유효성 검증
             self.quizzes = [Quiz(item["question"], item["choices"], item["answer"]) for item in validated]  # 저장된 상태 퀴즈 적용
             self.best_score = data.get("best_score", 0)  # 최고 점수 불러오기
+            self.has_played = data.get("has_played", False)  # 퀴즈 응시 여부 불러오기
             if not self.quizzes:  # 퀴즈 비어 있음 확인
-                raise ValueError("퀴즈 데이터가 비어 있습니다.")  # 복구 분기 유도
+                raise ValueError("퀴즈 데이터가 비어 있습니다.")  # 비어 있는 퀴즈 데이터 예외 발생
         except (FileNotFoundError, json.JSONDecodeError, KeyError, TypeError, ValueError):  # 로드 실패 예외 처리
             print("\n[기본 퀴즈 데이터로 복구]")  # 복구 안내 제목 출력
-            print("state.json 파일을 불러올 수 없어 state_default.json 데이터를 불러옵니다.")  # 복구 사유 출력
+            print("state.json 파일을 불러올 수 없어 state_default.json 데이터를 불러옵니다.")  # 복구 안내 문구 출력
             self._reset_with_default_data()  # 기본 데이터로 상태 복구
 
     def save_state(self):
         data = {  # 저장할 상태 데이터 구성
-            "quizzes": [quiz.to_dict() for quiz in self.quizzes],  # 퀴즈 목록 직렬화
+            "quizzes": [quiz.to_dict() for quiz in self.quizzes],  # 퀴즈 목록을 딕셔너리 형태로 저장
             "best_score": self.best_score,  # 최고 점수 저장
+            "has_played": self.has_played,  # 퀴즈 응시 여부 저장
             "history": [],  # 기록 목록 기본값
         }
         with open(self.state_file, "w", encoding="utf-8") as file:  # 상태 파일 쓰기
@@ -71,9 +75,10 @@ class QuizGame:
         print("\n[결과 요약]")  # 결과 요약 제목 출력
         print(result_line)  # 문제별 최종 결과 출력
         print(f"\n점수: {score}/{len(self.quizzes)}")  # 결과 점수 출력
+        self.has_played = True  # 퀴즈 응시 여부 갱신
         if score > self.best_score:  # 최고 점수 갱신 여부 확인
             self.best_score = score  # 최고 점수 갱신
-            self.save_state()  # 변경 상태 저장
+        self.save_state()  # 변경 상태 저장
 
     def add_quiz(self):
         print("\n[새로운 퀴즈 등록]")  # 퀴즈 등록 제목 출력
@@ -98,4 +103,7 @@ class QuizGame:
             print(f"{index}. {quiz.question}")  # 번호와 질문 출력
 
     def show_best_score(self):
+        if not self.has_played:  # 미응시 상태 확인
+            print("아직 퀴즈를 풀지 않았습니다.")  # 미응시 안내 문구 출력
+            return  # 함수 종료
         print(f"최고 점수: {self.best_score}")  # 최고 점수 출력
