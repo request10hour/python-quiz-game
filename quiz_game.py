@@ -1,5 +1,5 @@
 import json
-from quiz_bonus import QuizBonus
+from quiz_bonus import HintQuiz, RandomQuiz
 from input_handler import InputHandler
 
 
@@ -13,6 +13,7 @@ class QuizGame:
         self.state_file = "state.json"  # 상태 저장 파일 경로
         self.default_state_file = "state_default.json"  # 기본 상태 파일 경로
         self.input_handler = InputHandler()  # 공통 입력/검증 처리기
+        self.bonus_game = RandomQuiz()  # 보너스 출제 규칙 처리기
 
     # --- 상태 저장/로드 영역 시작 ---
 
@@ -22,14 +23,14 @@ class QuizGame:
         self.best_score = default_data.get("best_score", 0)  # 최고 점수 초기화
         self.has_played = default_data.get("has_played", False)  # 퀴즈 응시 여부 초기화
         validated = self.input_handler.validate_quizzes_data(default_data)  # 기본 데이터 유효성 검증
-        self.quizzes = [QuizBonus(item["question"], item["choices"], item["answer"], item["hint"]) for item in validated]  # 기본 퀴즈 적용
+        self.quizzes = [HintQuiz(item["question"], item["choices"], item["answer"], item["hint"]) for item in validated]  # 기본 퀴즈 적용
 
     def load_state(self):  # 저장된 상태 파일 로드
         try:  # 저장된 상태 파일 로드 시도
             with open(self.state_file, "r", encoding="utf-8") as file:  # 저장된 상태 파일 읽기
                 data = json.load(file)  # 저장된 상태 JSON 데이터 로드
             validated = self.input_handler.validate_quizzes_data(data)  # 저장된 상태 데이터 유효성 검증
-            self.quizzes = [QuizBonus(item["question"], item["choices"], item["answer"], item["hint"]) for item in validated]  # 저장된 상태 퀴즈 적용
+            self.quizzes = [HintQuiz(item["question"], item["choices"], item["answer"], item["hint"]) for item in validated]  # 저장된 상태 퀴즈 적용
             self.best_score = data.get("best_score", 0)  # 최고 점수 불러오기
             self.has_played = data.get("has_played", False)  # 퀴즈 응시 여부 불러오기
             if not self.quizzes:  # 퀴즈 비어 있음 확인
@@ -58,8 +59,9 @@ class QuizGame:
         return self.input_handler.input_int_in_range("메뉴를 입력하세요: ", 1, 5)  # 메뉴 번호 입력 반환
 
     def play_quiz(self):
+        selected_quizzes = self.bonus_game.select_quizzes_for_play(self.quizzes, self.input_handler)  # 출제할 퀴즈 목록 결정
         result_marks = []  # 문제별 결과 기록 리스트
-        for index, quiz in enumerate(self.quizzes, start=1):  # 퀴즈 순회
+        for index, quiz in enumerate(selected_quizzes, start=1):  # 선택된 퀴즈 순회
             print(f"\n[{index}번 문제] {quiz.question}")  # 문제 번호와 질문 출력
             quiz.display()  # 문제와 보기 출력
             user_answer, used_hint_in_question = quiz.input_answer_with_optional_hint(self.input_handler)  # 정답/힌트 입력 처리
@@ -76,7 +78,7 @@ class QuizGame:
         result_line = " / ".join([f"{index}. {mark}" for index, mark in enumerate(result_marks, start=1)])  # 최종 결과 라인 생성
         print("\n[결과 요약]")  # 결과 요약 제목 출력
         print(result_line)  # 문제별 최종 결과 출력
-        print(f"\n점수: {score}/{len(self.quizzes)}")  # 결과 점수 출력
+        print(f"\n점수: {score}/{len(selected_quizzes)}")  # 결과 점수 출력
         self.has_played = True  # 퀴즈 응시 여부 갱신
         if score > self.best_score:  # 최고 점수 갱신 여부 확인
             self.best_score = score  # 최고 점수 갱신
@@ -92,7 +94,7 @@ class QuizGame:
         answer = self.input_handler.input_int_in_range("정답 번호를 입력하세요: ", 1, 4)  # 정답 번호 입력
         hint = self.input_handler.input_non_empty_text("힌트를 입력하세요: ")  # 힌트 입력
 
-        self.quizzes.append(QuizBonus(question, choices, str(answer), hint))  # 새 퀴즈 추가
+        self.quizzes.append(HintQuiz(question, choices, str(answer), hint))  # 새 퀴즈 추가
         self.save_state()  # 변경 상태 저장
         print("퀴즈가 추가되었습니다.")  # 완료 문구 출력
 

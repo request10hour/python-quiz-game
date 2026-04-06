@@ -1,9 +1,39 @@
 """보너스 퀴즈 기능을 제공하는 모듈"""
 
+import random
+
 from quiz import Quiz
 
 
-class QuizBonus(Quiz):
+class RandomQuiz:
+    """보너스 출제 규칙을 담당하는 클래스"""
+
+    def _input_yes_no(self, input_handler, prompt: str) -> bool:
+        while True:
+            value = input_handler.input_non_empty_text(prompt).strip().lower()
+            if value in ("y", "yes"):
+                return True
+            if value in ("n", "no"):
+                return False
+            print("y 또는 n만 입력하세요.")
+
+    def select_quizzes_for_play(self, quizzes, input_handler):
+        """출제할 퀴즈 목록을 결정하는 함수"""
+        use_random = self._input_yes_no(input_handler, "랜덤 출제 사용(y/n): ")
+        use_count = self._input_yes_no(input_handler, "문제 수 선택 사용(y/n): ")
+
+        selected_quizzes = list(quizzes)
+        if use_random:
+            random.shuffle(selected_quizzes)  # 시드 고정 없이 매번 다른 순서 생성
+
+        if use_count:
+            quiz_count = input_handler.input_int_in_range("몇 문제를 풀까요: ", 1, len(selected_quizzes))
+            selected_quizzes = selected_quizzes[:quiz_count]
+
+        return selected_quizzes
+
+
+class HintQuiz(Quiz):
     """힌트 입력 처리 기능을 포함하는 퀴즈 클래스"""
 
     def show_hint(self):
