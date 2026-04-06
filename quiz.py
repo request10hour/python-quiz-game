@@ -7,14 +7,20 @@ class Quiz:
         self.answer = answer
 
     def display(self):
-        pass
+        print(f"질문: {self.question}")
+        for choice in self.choices:
+            print(choice)
 
     def check_answer(self, user_answer) -> bool:
-        pass
+        return str(user_answer).strip() == str(self.answer).strip()
 
     def to_dict(self) -> dict:
-        pass
+        return {
+            "question": self.question,
+            "choices": self.choices,
+            "answer": self.answer
+        }
 
     @classmethod
     def from_dict(cls, data: dict):
-        pass
+        return cls(data["question"], data["choices"], data["answer"])
